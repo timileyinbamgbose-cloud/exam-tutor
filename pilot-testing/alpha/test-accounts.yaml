@@ -1,0 +1,142 @@
+# ExamsTutor AI - Alpha Test Accounts
+# Phase 4: Pilot Testing - Epic 4.1
+# Test accounts for all user roles
+
+alpha_test_accounts:
+  # Student Accounts (Various Levels)
+  students:
+    - username: "student_ss1_weak"
+      email: "alpha.student.ss1.weak@examstutor.test"
+      role: "student"
+      class: "SS1"
+      subjects: ["Mathematics", "English", "Physics"]
+      profile:
+        performance_level: "weak"
+        learning_pace: "slow"
+        previous_score: 35
+      test_scenarios:
+        - "Struggle with basic concepts"
+        - "Need detailed explanations"
+        - "Multiple follow-up questions"
+        - "Test adaptive difficulty adjustment"
+
+    - username: "student_ss2_average"
+      email: "alpha.student.ss2.average@examstutor.test"
+      role: "student"
+      class: "SS2"
+      subjects: ["Chemistry", "Biology", "Mathematics"]
+      profile:
+        performance_level: "average"
+        learning_pace: "moderate"
+        previous_score: 60
+      test_scenarios:
+        - "Mixed understanding of concepts"
+        - "Test learning plan effectiveness"
+        - "Practice question adaptation"
+
+    - username: "student_ss3_strong"
+      email: "alpha.student.ss3.strong@examstutor.test"
+      role: "student"
+      class: "SS3"
+      subjects: ["Physics", "Chemistry", "Mathematics", "English"]
+      profile:
+        performance_level: "strong"
+        learning_pace: "fast"
+        previous_score: 85
+      test_scenarios:
+        - "Advanced problem solving"
+        - "Test challenging content delivery"
+        - "JAMB preparation focus"
+
+    - username: "student_ss1_visual"
+      email: "alpha.student.visual@examstutor.test"
+      role: "student"
+      class: "SS1"
+      subjects: ["Biology", "Chemistry"]
+      profile:
+        performance_level: "average"
+        learning_style: "visual"
+        previous_score: 55
+      test_scenarios:
+        - "Test diagram and visualization features"
+        - "Image-based explanations"
+
+  # Teacher Accounts
+  teachers:
+    - username: "teacher_math"
+      email: "alpha.teacher.math@examstutor.test"
+      role: "teacher"
+      subjects: ["Mathematics"]
+      classes: ["SS1", "SS2", "SS3"]
+      experience_years: 10
+      test_scenarios:
+        - "Review student progress"
+        - "Generate practice quizzes"
+        - "Analyze class performance"
+        - "Provide feedback on AI explanations"
+
+    - username: "teacher_science"
+      email: "alpha.teacher.science@examstutor.test"
+      role: "teacher"
+      subjects: ["Physics", "Chemistry", "Biology"]
+      classes: ["SS2", "SS3"]
+      experience_years: 8
+      test_scenarios:
+        - "Multi-subject teaching analytics"
+        - "Cross-subject concept mapping"
+        - "Test grading features"
+
+    - username: "teacher_english"
+      email: "alpha.teacher.english@examstutor.test"
+      role: "teacher"
+      subjects: ["English", "Literature"]
+      classes: ["SS1", "SS2", "SS3"]
+      experience_years: 12
+      test_scenarios:
+        - "Essay grading and feedback"
+        - "Language proficiency tracking"
+        - "Test comprehension analysis"
+
+  # Admin Accounts
+  admins:
+    - username: "admin_tech"
+      email: "alpha.admin.tech@examstutor.test"
+      role: "admin"
+      permissions: ["system_config", "user_management", "monitoring"]
+      test_scenarios:
+        - "System monitoring and alerts"
+        - "User management operations"
+        - "Performance optimization"
+        - "Bug triage and reporting"
+
+    - username: "admin_academic"
+      email: "alpha.admin.academic@examstutor.test"
+      role: "admin"
+      permissions: ["content_management", "curriculum", "reports"]
+      test_scenarios:
+        - "Content quality review"
+        - "Curriculum alignment validation"
+        - "Academic analytics"
+
+# Account Configuration
+account_config:
+  password_policy:
+    min_length: 8
+    require_special: false  # For testing only
+    test_password: "Alpha2025Test!"  # Same for all test accounts
+
+  rate_limits:
+    disabled: true  # Disable for alpha testing
+
+  data_retention:
+    alpha_test_data: "30_days"  # Auto-delete after alpha phase
+
+  features_enabled:
+    all: true  # All features enabled for comprehensive testing
+
+# Test Data Pre-population
+test_data:
+  questions_per_student: 50  # Pre-answered for progress tracking
+  learning_plans: true  # Generate initial learning plans
+  practice_history: true  # Simulate past practice sessions
+  diagnostic_results: true  # Pre-generate diagnostic data

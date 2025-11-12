@@ -1,0 +1,70 @@
+# AlertManager Configuration
+# ExamsTutor AI API
+
+global:
+  resolve_timeout: 5m
+
+# Route tree
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: false
+
+    # Warning alerts - aggregated
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      group_interval: 5m
+
+# Receivers
+receivers:
+  - name: 'default'
+    # Webhook for general alerts
+    webhook_configs:
+      - url: 'http://host.docker.internal:8000/api/v1/alerts/webhook'
+        send_resolved: true
+
+  - name: 'critical-alerts'
+    # Email for critical alerts (configure SMTP)
+    # email_configs:
+    #   - to: 'ops@examstutor.ng'
+    #     from: 'alerts@examstutor.ng'
+    #     smarthost: 'smtp.gmail.com:587'
+    #     auth_username: 'alerts@examstutor.ng'
+    #     auth_password: 'your-password'
+
+    # Slack for critical alerts
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+    #     channel: '#examstutor-critical'
+    #     title: 'Critical Alert: {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+    # Webhook
+    webhook_configs:
+      - url: 'http://host.docker.internal:8000/api/v1/alerts/critical'
+        send_resolved: true
+
+  - name: 'warning-alerts'
+    webhook_configs:
+      - url: 'http://host.docker.internal:8000/api/v1/alerts/warning'
+        send_resolved: true
+
+# Inhibition rules
+inhibit_rules:
+  # Inhibit warning if critical is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']

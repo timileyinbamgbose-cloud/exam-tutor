@@ -1,0 +1,113 @@
+# Horizontal Pod Autoscaler for Phase 5 Scale
+# Auto-scale from 10 to 100 pods based on load
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: examstutor-api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: examstutor-api
+
+  # Scale configuration
+  minReplicas: 10  # Increased from 3
+  maxReplicas: 100  # Increased from 10
+
+  # Scaling behavior
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60  # Fast scale-up
+      policies:
+      - type: Percent
+        value: 50  # Scale up by 50% of current pods
+        periodSeconds: 60
+      - type: Pods
+        value: 5  # Or add 5 pods
+        periodSeconds: 60
+      selectPolicy: Max  # Use whichever policy scales faster
+
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5 min window before scaling down
+      policies:
+      - type: Percent
+        value: 10  # Scale down by 10% at a time
+        periodSeconds: 60
+      - type: Pods
+        value: 2  # Or remove 2 pods
+        periodSeconds: 60
+      selectPolicy: Min  # Use whichever policy is more conservative
+
+  # Metrics for scaling decisions
+  metrics:
+  # CPU utilization
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # Scale up if CPU > 70%
+
+  # Memory utilization
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80  # Scale up if memory > 80%
+
+  # Custom metrics (requires Prometheus adapter)
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "100"  # Scale if > 100 req/sec per pod
+
+  - type: Pods
+    pods:
+      metric:
+        name: api_response_time_seconds
+      target:
+        type: AverageValue
+        averageValue: "1.5"  # Scale if response time > 1.5s
+
+---
+# Pod Disruption Budget - Ensure high availability during scaling
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: examstutor-api-pdb
+spec:
+  minAvailable: 5  # Always keep at least 5 pods running
+  selector:
+    matchLabels:
+      app: examstutor-api
+
+---
+# Vertical Pod Autoscaler (optional, for right-sizing)
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: examstutor-api-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: examstutor-api
+
+  updatePolicy:
+    updateMode: "Auto"  # Automatically apply recommendations
+
+  resourcePolicy:
+    containerPolicies:
+    - containerName: api
+      minAllowed:
+        cpu: "1000m"
+        memory: "2Gi"
+      maxAllowed:
+        cpu: "4000m"
+        memory: "8Gi"
+      controlledResources: ["cpu", "memory"]

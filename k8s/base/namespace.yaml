@@ -1,0 +1,11 @@
+# ExamsTutor AI - Kubernetes Namespace
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: examstutor
+  labels:
+    app.kubernetes.io/name: examstutor
+    app.kubernetes.io/part-of: examstutor-ai-api
+    environment: production

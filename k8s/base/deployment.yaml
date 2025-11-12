@@ -1,0 +1,235 @@
+# ExamsTutor AI - Deployment
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: examstutor-api
+  namespace: examstutor
+  labels:
+    app: examstutor-api
+    version: v0.4.0
+    component: api
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: examstutor-api
+  template:
+    metadata:
+      labels:
+        app: examstutor-api
+        version: v0.4.0
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: examstutor-api-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      # Init container to check dependencies
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo waiting for postgres; sleep 2; done;']
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+
+      - name: wait-for-redis
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z redis-service 6379; do echo waiting for redis; sleep 2; done;']
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+
+      containers:
+      - name: api
+        image: examstutor-api:0.4.0
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+
+        env:
+        # ConfigMap environment variables
+        - name: APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: examstutor-config
+              key: APP_NAME
+
+        - name: APP_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: examstutor-config
+              key: APP_VERSION
+
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: examstutor-config
+              key: ENVIRONMENT
+
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: examstutor-config
+              key: LOG_LEVEL
+
+        - name: PROMETHEUS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: examstutor-config
+              key: PROMETHEUS_ENABLED
+
+        - name: ENABLE_TRACING
+          valueFrom:
+            configMapKeyRef:
+              name: examstutor-config
+              key: ENABLE_TRACING
+
+        - name: JAEGER_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: examstutor-config
+              key: JAEGER_ENDPOINT
+
+        # Secret environment variables
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: examstutor-secrets
+              key: SECRET_KEY
+
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: examstutor-secrets
+              key: JWT_SECRET_KEY
+
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: examstutor-secrets
+              key: DATABASE_URL
+
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: examstutor-secrets
+              key: REDIS_URL
+
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+
+        # Startup probe for slow-starting containers
+        startupProbe:
+          httpGet:
+            path: /health/live
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 30
+
+        # Volume mounts
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: models
+          mountPath: /app/models
+        - name: logs
+          mountPath: /app/logs
+
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: examstutor-data-pvc
+      - name: models
+        persistentVolumeClaim:
+          claimName: examstutor-models-pvc
+      - name: logs
+        emptyDir: {}
+
+      # Affinity rules for better distribution
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - examstutor-api
+              topologyKey: kubernetes.io/hostname
+
+      # Tolerations
+      tolerations:
+      - key: "node-role.kubernetes.io/worker"
+        operator: "Exists"
+        effect: "NoSchedule"

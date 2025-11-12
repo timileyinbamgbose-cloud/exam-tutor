@@ -1,0 +1,15 @@
+# Development Service Patches
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: examstutor-api-service
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8000
+    nodePort: 30800

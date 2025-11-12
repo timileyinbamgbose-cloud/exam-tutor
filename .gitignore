@@ -1,0 +1,92 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Models & Data
+models/
+*.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
+*.safetensors
+data/vector_db/
+data/cache/
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+coverage.xml
+*.cover
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Monitoring
+prometheus_data/
+grafana_data/
+
+# Kubernetes
+*.secret.yaml
+secrets/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Temporary
+tmp/
+temp/
+*.tmp
+.cache/

@@ -1,0 +1,42 @@
+# ExamsTutor AI - Staging Environment Overlay
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: examstutor-staging
+
+# Base configuration
+bases:
+- ../../base
+
+# Namespace suffix for staging
+nameSuffix: -staging
+
+# Common labels for staging
+commonLabels:
+  environment: staging
+  tier: staging
+
+# Patches for staging environment
+patchesStrategicMerge:
+- deployment-patch.yaml
+- ingress-patch.yaml
+
+# ConfigMap patches for staging-specific settings
+configMapGenerator:
+- name: examstutor-config
+  behavior: merge
+  literals:
+  - ENVIRONMENT=staging
+  - LOG_LEVEL=INFO
+
+# Replicas for staging
+replicas:
+- name: examstutor-api
+  count: 2
+
+# Images for staging
+images:
+- name: examstutor-api
+  newTag: staging-latest

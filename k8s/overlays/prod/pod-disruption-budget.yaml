@@ -1,0 +1,18 @@
+# Production Pod Disruption Budget
+# Epic 3.4: Kubernetes Deployment & Security
+# Ensures high availability during voluntary disruptions
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: examstutor-api-pdb
+  namespace: examstutor
+  labels:
+    app: examstutor-api
+    component: availability
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: examstutor-api
+  unhealthyPodEvictionPolicy: AlwaysAllow

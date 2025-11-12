@@ -1,0 +1,27 @@
+apiVersion: v2
+name: examstutor-api
+description: ExamsTutor AI Tutor API - Helm Chart for Kubernetes Deployment
+type: application
+version: 0.4.0
+appVersion: "0.4.0"
+
+keywords:
+  - education
+  - ai
+  - tutor
+  - examstutor
+  - nigeria
+
+maintainers:
+  - name: ExamsTutor Team
+    email: support@examstutor.ng
+
+home: https://examstutor.ng
+sources:
+  - https://github.com/examstutor/ai-api
+
+dependencies: []
+
+annotations:
+  category: Education
+  licenses: Proprietary

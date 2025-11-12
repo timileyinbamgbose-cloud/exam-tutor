@@ -1,0 +1,44 @@
+# ExamsTutor AI - Development Environment Overlay
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: examstutor-dev
+
+# Base configuration
+bases:
+- ../../base
+
+# Namespace suffix for dev
+nameSuffix: -dev
+
+# Common labels for development
+commonLabels:
+  environment: development
+  tier: dev
+
+# Patches for development environment
+patchesStrategicMerge:
+- deployment-patch.yaml
+- service-patch.yaml
+- ingress-patch.yaml
+
+# ConfigMap patches for dev-specific settings
+configMapGenerator:
+- name: examstutor-config
+  behavior: merge
+  literals:
+  - ENVIRONMENT=development
+  - LOG_LEVEL=DEBUG
+  - API_RELOAD=true
+
+# Replicas for development
+replicas:
+- name: examstutor-api
+  count: 1
+
+# Images for development
+images:
+- name: examstutor-api
+  newTag: dev-latest

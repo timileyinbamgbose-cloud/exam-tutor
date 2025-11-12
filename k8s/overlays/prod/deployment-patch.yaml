@@ -1,0 +1,25 @@
+# Production Deployment Patches
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: examstutor-api
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: api
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: LOG_LEVEL
+          value: "INFO"

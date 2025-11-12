@@ -1,0 +1,42 @@
+# ExamsTutor AI - Kustomize Base Configuration
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: examstutor
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: examstutor-api
+  app.kubernetes.io/part-of: examstutor
+  app.kubernetes.io/managed-by: kustomize
+
+# Common annotations
+commonAnnotations:
+  version: "0.4.0"
+  managed-by: "kubernetes"
+
+# Resources
+resources:
+- namespace.yaml
+- serviceaccount.yaml
+- configmap.yaml
+- secrets.yaml
+- pvc.yaml
+- deployment.yaml
+- service.yaml
+- ingress.yaml
+
+# ConfigMap generator for non-sensitive data
+configMapGenerator:
+- name: app-info
+  literals:
+  - app.name=ExamsTutor AI API
+  - app.version=0.4.0
+  - phase=production
+
+# Images to update
+images:
+- name: examstutor-api
+  newTag: 0.4.0

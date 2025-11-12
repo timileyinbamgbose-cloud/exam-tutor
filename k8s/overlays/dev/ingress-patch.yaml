@@ -1,0 +1,21 @@
+# Development Ingress Patches
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: examstutor-api-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - host: api-dev.examstutor.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: examstutor-api-service
+            port:
+              number: 80

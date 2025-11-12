@@ -1,0 +1,23 @@
+# Staging Ingress Patches
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: examstutor-api-ingress
+spec:
+  tls:
+  - hosts:
+    - api-staging.examstutor.ng
+    secretName: examstutor-tls-staging
+  rules:
+  - host: api-staging.examstutor.ng
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: examstutor-api-service
+            port:
+              number: 80

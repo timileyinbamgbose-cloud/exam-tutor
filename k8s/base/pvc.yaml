@@ -1,0 +1,37 @@
+# ExamsTutor AI - Persistent Volume Claims
+# Epic 3.4: Kubernetes Deployment & Security
+
+# PVC for application data (vector store, sync queue)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: examstutor-data-pvc
+  namespace: examstutor
+  labels:
+    app: examstutor-api
+    component: storage
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: standard  # Change based on your cluster
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+# PVC for model files
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: examstutor-models-pvc
+  namespace: examstutor
+  labels:
+    app: examstutor-api
+    component: storage
+spec:
+  accessModes:
+  - ReadOnlyMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 20Gi

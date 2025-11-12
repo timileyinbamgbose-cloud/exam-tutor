@@ -1,0 +1,269 @@
+# ExamsTutor AI - Helm Values
+# Epic 3.4: Kubernetes Deployment & Security
+# Default values for examstutor-api
+
+# Global settings
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+# Namespace
+namespaceOverride: ""
+
+# Image configuration
+image:
+  registry: docker.io
+  repository: examstutor/ai-api
+  tag: "0.4.0"
+  pullPolicy: IfNotPresent
+
+# Replica configuration
+replicaCount: 3
+
+# Update strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "examstutor-api-sa"
+
+# Pod Security Context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container Security Context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+    - ALL
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  hosts:
+    - host: api.examstutor.ng
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: examstutor-tls
+      hosts:
+        - api.examstutor.ng
+
+# Resource limits and requests
+resources:
+  requests:
+    memory: "2Gi"
+    cpu: "1000m"
+  limits:
+    memory: "4Gi"
+    cpu: "2000m"
+
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Health checks
+healthChecks:
+  liveness:
+    enabled: true
+    path: /health/live
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    path: /health/ready
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startup:
+    enabled: true
+    path: /health/live
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+# Persistent storage
+persistence:
+  data:
+    enabled: true
+    storageClass: "standard"
+    accessMode: ReadWriteMany
+    size: 50Gi
+  models:
+    enabled: true
+    storageClass: "standard"
+    accessMode: ReadOnlyMany
+    size: 20Gi
+
+# Application configuration
+config:
+  appName: "ExamsTutor AI API"
+  appVersion: "0.4.0"
+  environment: "production"
+  logLevel: "INFO"
+
+  # Model settings
+  modelName: "meta-llama/Llama-3-8B-Instruct"
+  modelPath: "/app/models"
+  quantizationType: "int4"
+  device: "auto"
+
+  # Vector DB
+  vectorDbType: "faiss"
+  vectorDbPath: "/app/data/vector_store"
+  embeddingModel: "sentence-transformers/all-MiniLM-L6-v2"
+
+  # Offline sync
+  syncEnabled: true
+  syncIntervalSeconds: 300
+  syncBatchSize: 100
+  syncMaxRetries: 3
+
+  # Monitoring
+  prometheusEnabled: true
+  enableTracing: true
+  jaegerEndpoint: "http://jaeger-collector.monitoring.svc.cluster.local:14268/api/traces"
+
+  # NDPR Compliance
+  dataRetentionDays: 365
+  enableDataEncryption: true
+  enableAuditLogging: true
+  enablePiiMasking: true
+
+  # CORS
+  corsOrigins: "https://examstutor.ng,https://app.examstutor.ng"
+  corsAllowCredentials: true
+
+  # Rate limiting
+  rateLimitEnabled: true
+  rateLimitRequestsPerMinute: 60
+
+  # File upload
+  maxUploadSizeMb: 10
+
+# Secrets (should be overridden in production)
+secrets:
+  secretKey: "your-secret-key-here-change-in-production"
+  jwtSecretKey: "your-jwt-secret-key-here-change-in-production"
+  piiEncryptionKey: "your-pii-encryption-key-here-change-in-production"
+  databaseUrl: "postgresql+asyncpg://examstutor:password@postgres:5432/examstutor"
+  redisUrl: "redis://:password@redis:6379/0"
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Network Policy
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+      ports:
+      - protocol: TCP
+        port: 8000
+  egress:
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            name: kube-system
+      ports:
+      - protocol: UDP
+        port: 53
+
+# Pod affinity and anti-affinity
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - examstutor-api
+        topologyKey: kubernetes.io/hostname
+
+# Tolerations
+tolerations: []
+
+# Node selector
+nodeSelector: {}
+
+# Environment-specific values
+environments:
+  development:
+    replicaCount: 1
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    config:
+      logLevel: "DEBUG"
+    autoscaling:
+      enabled: false
+
+  staging:
+    replicaCount: 2
+    resources:
+      requests:
+        memory: "1.5Gi"
+        cpu: "750m"
+      limits:
+        memory: "3Gi"
+        cpu: "1500m"
+    autoscaling:
+      enabled: false
+
+  production:
+    # Uses default values above

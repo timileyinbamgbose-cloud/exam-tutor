@@ -1,0 +1,76 @@
+# ExamsTutor AI API - Phase 3 Requirements
+# Generated for compatibility with pip
+
+# API Framework
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# ML & AI Core
+torch==2.1.2
+transformers==4.36.2
+accelerate==0.25.0
+bitsandbytes==0.41.3
+peft==0.7.1
+sentencepiece==0.1.99
+
+# EPIC 3.1: Quantization & Optimization
+onnx==1.15.0
+onnxruntime==1.16.3
+onnxruntime-gpu==1.16.3
+optimum[onnxruntime]==1.16.2
+auto-gptq==0.6.0
+autoawq==0.1.8
+
+# EPIC 3.1: Offline RAG - Vector Databases
+qdrant-client==1.7.3
+chromadb==0.4.22
+faiss-cpu==1.7.4
+sentence-transformers==2.2.2
+
+# Database
+sqlalchemy==2.0.25
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Caching & Tasks
+redis==5.0.1
+celery==5.3.6
+
+# EPIC 3.3: Monitoring & Observability
+prometheus-client==0.19.0
+opentelemetry-api==1.22.0
+opentelemetry-sdk==1.22.0
+opentelemetry-instrumentation-fastapi==0.43b0
+python-json-logger==2.0.7
+
+# EPIC 3.2: Testing & QA
+pytest==7.4.4
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+httpx==0.26.0
+locust==2.20.1
+
+# Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+cryptography==41.0.7
+python-multipart==0.0.6
+
+# Utilities
+python-dotenv==1.0.0
+tenacity==8.2.3
+loguru==0.7.2
+pyyaml==6.0.1
+click==8.1.7
+
+# Development Tools
+black==23.12.1
+flake8==7.0.0
+mypy==1.8.0
+isort==5.13.2
+pre-commit==3.6.0
+ipython==8.19.0

@@ -1,0 +1,45 @@
+# ExamsTutor AI - Production Environment Overlay
+# Epic 3.4: Kubernetes Deployment & Security
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: examstutor
+
+# Base configuration
+bases:
+- ../../base
+
+# Common labels for production
+commonLabels:
+  environment: production
+  tier: prod
+
+# Patches for production environment
+patchesStrategicMerge:
+- deployment-patch.yaml
+- hpa-patch.yaml
+
+# Additional resources for production
+resources:
+- pod-disruption-budget.yaml
+- network-policy.yaml
+
+# ConfigMap patches for production-specific settings
+configMapGenerator:
+- name: examstutor-config
+  behavior: merge
+  literals:
+  - ENVIRONMENT=production
+  - LOG_LEVEL=INFO
+  - API_RELOAD=false
+
+# Replicas for production (HPA will manage this)
+replicas:
+- name: examstutor-api
+  count: 3
+
+# Images for production
+images:
+- name: examstutor-api
+  newTag: 0.4.0
