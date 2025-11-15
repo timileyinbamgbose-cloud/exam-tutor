@@ -1,150 +1,82 @@
-# ExamsTutor AI Tutor API - Development Docker Compose
-# Epic 3.4: Kubernetes Deployment & Security
-# For local development with all dependencies
-
 version: '3.8'
 
 services:
-  # Main API Service
-  api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    container_name: examstutor-api
-    ports:
-      - "8000:8000"
-    environment:
-      - ENVIRONMENT=development
-      - LOG_LEVEL=DEBUG
-      - DATABASE_URL=postgresql://examstutor:examstutor123@postgres:5432/examstutor
-      - REDIS_URL=redis://redis:6379/0
-      - VECTOR_DB_PATH=/app/data/vector_store
-      - MODEL_PATH=/app/models
-      - PROMETHEUS_ENABLED=true
-      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
-    volumes:
-      - ./src:/app/src
-      - ./config:/app/config
-      - ./data:/app/data
-      - ./models:/app/models
-      - ./logs:/app/logs
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - examstutor-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: examstutor-postgres
     environment:
-      - POSTGRES_USER=examstutor
-      - POSTGRES_PASSWORD=examstutor123
-      - POSTGRES_DB=examstutor
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_DB: examstutor
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
-    networks:
-      - examstutor-network
-    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U examstutor"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - examstutor-network
 
   # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: examstutor-redis
-    command: redis-server --appendonly yes --requirepass examstutor123
-    volumes:
-      - redis_data:/data
     ports:
       - "6379:6379"
-    networks:
-      - examstutor-network
-    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # Prometheus (Metrics)
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: examstutor-prometheus-dev
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    volumes:
-      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    ports:
-      - "9090:9090"
     networks:
       - examstutor-network
-    restart: unless-stopped
 
-  # Grafana (Visualization)
-  grafana:
-    image: grafana/grafana:latest
-    container_name: examstutor-grafana-dev
+  # ExamsTutor API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: examstutor-api
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - ./config/grafana/provisioning:/etc/grafana/provisioning
-      - ./config/grafana/dashboards:/var/lib/grafana/dashboards
-      - grafana_data:/var/lib/grafana
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/examstutor
+      REDIS_URL: redis://redis:6379/0
+      API_PORT: 8000
+      ENVIRONMENT: production
+      DEBUG: "false"
+      CORS_ORIGINS: "http://localhost:3000,https://your-frontend.com"
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-your-jwt-secret-change-in-production}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
+      LOG_LEVEL: INFO
+      LOG_FORMAT: json
     ports:
-      - "3000:3000"
+      - "8000:8000"
     depends_on:
-      - prometheus
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
     networks:
       - examstutor-network
     restart: unless-stopped
 
-  # Jaeger (Distributed Tracing)
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: examstutor-jaeger-dev
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-    ports:
-      - "16686:16686"  # Jaeger UI
-      - "14268:14268"  # Jaeger collector HTTP
-      - "4317:4317"    # OTLP gRPC
-      - "4318:4318"    # OTLP HTTP
-    networks:
-      - examstutor-network
-    restart: unless-stopped
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
 
 networks:
   examstutor-network:
     driver: bridge
-    name: examstutor-network
-
-volumes:
-  postgres_data:
-    name: examstutor-postgres-data
-  redis_data:
-    name: examstutor-redis-data
-  prometheus_data:
-    name: examstutor-prometheus-data
-  grafana_data:
-    name: examstutor-grafana-data
